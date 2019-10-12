@@ -1,0 +1,24 @@
+h1 {
+	text-align: center;
+}
+
+.column-selection {
+	position: absolute;
+	width: 250px;
+	padding: 10px;
+	margin-top: 70px;
+	font-size: 18px;
+    border: 1px solid #757575;
+    border-radius: 5px;
+}
+
+.column-selection h4{
+	text-align: center;
+}
+
+.column-selection input {
+	width: 40px;
+    height: 18px;
+    vertical-align: top;
+    margin-bottom: 9px;
+}
