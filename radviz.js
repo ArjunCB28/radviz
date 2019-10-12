@@ -6,21 +6,9 @@ var svgHeight = 800,
 var anchorCX = 400;
 var anchorCY = 400;
 var anchorCircleRadius = 250;
-var labelCircleRadius = 325;
+var labelCircleRadius = 275;
 
 var svg = d3.select("body").append("svg").attr("width", svgHeight).attr("height", svgHeight).attr("cx", 100).attr("cy", 100);
-
-
-// label names circle
-// svg.selectAll("anchorLabel").append("anchorLabel");
-// svg.selectAll("anchorLabel").data([1]).enter()
-// .append("circle")
-// .attr("r",labelCircleRadius)
-// .attr("fill","white")
-// .attr("cx", anchorCX)
-// .attr("cy", anchorCY)
-// .style("stroke", d => d.error ? "red" : "red")
-
 
 // outer circle
 svg.selectAll("anchorCircle").append("anchorCircle");
@@ -41,16 +29,30 @@ var attrPositionY = function(j, radius) {
 }
 
 
-//////////////
+// group element that holds anchors and label
+// for drag https://bl.ocks.org/d3noob/204d08d309d2b2903e12554b0aef6a4d
+
+function dragstarted(d) {
+  d3.select(this).raise().classed("active", true);
+}
+
+function dragged(d) {
+  d3.select(this).select("text")
+    .attr("x", d.x = d3.event.x)
+    .attr("y", d.y = d3.event.y);
+  d3.select(this).select("rect")
+    .attr("x", d.x = d3.event.x)
+    .attr("y", d.y = d3.event.y);
+}
+
+function dragended(d) {
+  d3.select(this).classed("active", false);
+}
+
 var g = svg.selectAll("anchorCircle")
     .data(columns)
     .enter()
-    .append("g")
-    // .attr("x",(d,i)=>{return attrPositionX(i,anchorCircleRadius);})
-    // .attr("y",(d,i)=>{return attrPositionY(i,anchorCircleRadius);})
-    // .attr("transform", function(d, i) {
-    //     return "translate(" + attrPositionX(i, anchorCircleRadius) + "," + attrPositionY(i, anchorCircleRadius) + ")";
-    // })
+    .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
 
 
@@ -69,31 +71,11 @@ g.append("text")
         return d;
     })
     .attr("x", (d, i) => {
-        return attrPositionX(i, anchorCircleRadius);
+        return attrPositionX(i, labelCircleRadius);
     })
 	.attr("y", (d, i) => {
-        return attrPositionY(i, anchorCircleRadius);
+        return attrPositionY(i, labelCircleRadius);
     })
-
-
-/////////////
-
-// plotting anchors around the circle
-// svg.selectAll("anchorCircle").data(columns).enter().append("circle")
-// .attr("r",10)
-// .attr("cx",(d,i)=>{return attrPositionX(i,anchorCircleRadius);})
-// .attr("cy",(d,i)=>{return attrPositionY(i,anchorCircleRadius);})
-// .attr("fill","blue")
-// .attr("style","z-index:9;");
-
-
-// plotting labels around the anchors
-// svg.selectAll("anchorLabel").data(columns).enter().append("text")
-// // .attr("r",50)
-// .attr("x",(d,i)=>{return attrPositionX(i,labelCircleRadius);})
-// .attr("y",(d,i)=>{return attrPositionY(i,labelCircleRadius);})
-// .text(d=>{return d;})
-// // .attr("fill","blue");
 
 
 // plotting points inside graph
@@ -185,5 +167,5 @@ var constructDataPoints = function() {
 d3.csv("winequality-red.csv", data => {
     WineData = data;
     console.log(JSON.stringify(WineData[0]));
-    // constructDataPoints();
+    constructDataPoints();
 });
