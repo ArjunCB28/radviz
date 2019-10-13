@@ -96,6 +96,7 @@ var createAnchors = function(){
 var datapoints;
 // method to construct the data points inside the circle.
 var constructDataPoints = function() {
+
     // data points
     svg.selectAll("points").append("points");
 
@@ -133,10 +134,13 @@ var transitionDataPoints = function(){
     datapoints.transition()
    .duration(500)
    .attr("cx", function(d, i) {
-        return calcDataPointX(d, i);
+       console.log("d.coordinateX() " +JSON.stringify(d));
+        return d.coordinateX();
+        // return calcDataPointX(d, i);
     })
     .attr("cy", function(d, i) {
-        return calcDataPointY(d, i);
+        return d.coordinateY();
+        // return calcDataPointY(d, i);
     })
 };
 
@@ -149,8 +153,7 @@ var calcDataPointX = function(data, index) {
         // num += +data[column] * Math.cos((j + 1) * Math.PI/180) * attrPositionX(j, anchorCircleRadius, columns.length);
         // (j * 360 / m) *Math.PI/180
 
-        // num += +data[column] * Math.cos((j * 360 / selectedColumnsArr.length) * Math.PI/180) + selectedColumns[column].x;
-        num += +data[column] * selectedColumns[column].x;
+        num += +data[column] * Math.cos((j * 360 / selectedColumnsArr.length) * Math.PI/180) + selectedColumns[column].x;
 
         // num += +data[column] * Math.cos(j + 1) * selectedColumns[column].x;
         den += +data[column];
@@ -165,8 +168,7 @@ var calcDataPointY = function(data, index) {
         // num += +data[column] * Math.sin((j + 1) * Math.PI/180) * attrPositionY(j, anchorCircleRadius, columns.length);
 
         // num += +data[column] * Math.sin(j + 1) * selectedColumns[column].y;
-        // num += +data[column] * Math.sin((j * 360 / selectedColumnsArr.length) * Math.PI/180) + selectedColumns[column].y;
-        num += +data[column] *  selectedColumns[column].y;
+        num += +data[column] * Math.sin((j * 360 / selectedColumnsArr.length) * Math.PI/180) + selectedColumns[column].y;
         den += +data[column];
     });
     return num / den;
@@ -193,8 +195,8 @@ var calculateAnchorCoordinates = function(){
         selectedColumns[column].y = attrPositionY(index,anchorCircleRadius, getColumnLength());
         index++;
     }
-    console.log(JSON.stringify(selectedColumns));
     createAnchors();
+    buildDataPointsArr();
     transitionDataPoints();
 };
 
@@ -246,14 +248,77 @@ var constructColumnSelection = function(){
 };
 
 
+// changes
+// plotting points inside graph
+function Attractor(name, x, y) {
+    this.name = name
+    this.x = x
+    this.y = y
+}
+
+
+function DataPoint(attractions, quality) {
+    this.attractions = attractions
+    this.quality = quality
+    this.totalAttractorForce = function() {
+        return this.attractions.map(function(a) {
+            return a.force
+        }).reduce(function(a, b) {
+            return a + b
+        })
+    }
+    this.coordinateX = function() {
+        return this.attractions.map(function(a) {
+            return a.force * a.attractor.x
+        }).reduce(function(a, b) {
+            return a + b
+        }) / this.totalAttractorForce()
+    }
+    this.coordinateY = function() {
+        return this.attractions.map(function(a) {
+            return a.force * a.attractor.y
+        }).reduce(function(a, b) {
+            return a + b
+        }) / this.totalAttractorForce()
+    }
+    this.coordinates = [this.coordinateX(), this.coordinateY()]
+}
+
+
+var attractorObj = {};
+
+
+var buildDataPointsObj = function(item) {
+    // WineData
+    return selectedColumnsArr.reduce((prevValue, column) => {
+        prevValue.push({
+            attractor: attractorObj[column],
+            force: +item[column]
+        });
+        return prevValue;
+    }, []);
+}
+
+var buildDataPointsArr = function(){
+    dataPointsArr = [];
+    selectedColumnsArr.forEach((column, index) => attractorObj[column] = new Attractor(column, attrPositionX(index, anchorCircleRadius,selectedColumnsArr.length), attrPositionY(index, anchorCircleRadius,selectedColumnsArr.length)));
+    WineData.forEach((item) => {
+        dataPointsArr.push(new DataPoint(buildDataPointsObj(item), item.quality))
+    });
+    console.log("dataPointsArr "+dataPointsArr.length)
+};
+
+var dataPointsArr = [];
+
+
 d3.csv("winequality-red.csv", data => {
     WineData = data;
     columns = Object.keys(WineData[0]);
     columns.pop();
-    console.log("columns " + JSON.stringify(columns));
     initialize();
     createAnchors();
     constructColumnSelection();
+    // buildDataPointsArr();
     constructDataPoints();
 });
 
